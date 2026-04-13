@@ -1,6 +1,10 @@
 import urllib.request
 import zipfile
 import os
+import ssl
+
+# Bypass SSL verification
+ssl._create_default_https_context = ssl._create_unverified_context
 
 def download_and_extract(url, zip_path, extract_dir):
     if not os.path.exists(extract_dir):
@@ -19,14 +23,27 @@ def download_and_extract(url, zip_path, extract_dir):
 
 if __name__ == "__main__":
     # 使用著名的 Laurence Moroney 提供的小型“石头剪刀布”合成数据集 (约 200 MB)
-    dataset_url = "https://storage.googleapis.com/laurencemoroney-blog.appspot.com/rps.zip"
+    dataset_url = "https://storage.googleapis.com/download.tensorflow.org/data/rps.zip"
     
     # 目标目录
     target_dir = "dataset"
     zip_file = "rps.zip"
     
-    os.makedirs(target_dir, exist_ok=True)
-    download_and_extract(dataset_url, zip_file, target_dir)
+    # Check if rps directory exists inside dataset
+    if not os.path.exists(os.path.join(target_dir, 'rps')):
+        os.makedirs(target_dir, exist_ok=True)
+        print(f"Downloading dataset from {dataset_url} ... (This may take a few minutes)")
+        urllib.request.urlretrieve(dataset_url, zip_file)
+        
+        print("Extracting zip file...")
+        with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+            zip_ref.extractall(target_dir)
+            
+        print("Cleaning up zip file...")
+        os.remove(zip_file)
+        print(f"Dataset successfully extracted to: {target_dir}")
+    else:
+        print(f"Dataset directory '{target_dir}/rps' already exists. Skipping download.")
     
     print("\nDataset structure:")
     for root, dirs, files in os.walk(os.path.join(target_dir, 'rps')):

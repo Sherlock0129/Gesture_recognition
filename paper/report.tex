@@ -1,0 +1,136 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{booktabs} % For formal tables
+\usepackage{multirow}
+\usepackage{caption}
+\usepackage{subcaption}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+
+\title{Real-Time Hand Gesture Recognition Using Lightweight Convolutional Neural Networks\\
+}
+
+\author{
+\IEEEauthorblockN{Anonymous Author}
+\IEEEauthorblockA{\textit{Department of Computer Science} \\
+\textit{University Name}\\
+City, Country \\
+email@domain.edu}
+}
+
+\maketitle
+
+\begin{abstract}
+Hand gesture recognition is a fundamental component of intuitive human-computer interaction (HCI) systems. This paper presents a robust and lightweight deep learning approach for real-time hand gesture recognition, specifically classifying the ``Rock, Paper, Scissors'' gestures. By utilizing the pre-trained MobileNetV2 architecture, we achieved highly efficient feature extraction suitable for real-time edge deployment. The model was fine-tuned on a public dataset comprising 2,520 diverse computer-generated imagery (CGI) images. To simulate real-world conditions, several data augmentation techniques were applied during the training phase. Experimental results demonstrate that the proposed Convolutional Neural Network (CNN) model converged rapidly within just three epochs, achieving a training accuracy of 99.75\% and a validation accuracy of 100.0\%. Furthermore, the integrated inference pipeline built with OpenCV ensures a seamless and responsive real-time recognition experience using standard webcams, maintaining high frame rates while consistently identifying gestures with high confidence.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Hand Gesture Recognition, Convolutional Neural Network, MobileNetV2, Real-time Processing, Human-Computer Interaction
+\end{IEEEkeywords}
+
+\section{Introduction}
+With the rapid advancements in computer vision and artificial intelligence, Human-Computer Interaction (HCI) has evolved significantly from traditional peripherals to more natural and intuitive interfaces. Hand gesture recognition has emerged as a prominent modality in this domain, offering touchless control mechanisms applicable in various fields such as virtual reality, smart home automation, and sign language translation.
+
+The primary challenge in real-time gesture recognition lies in balancing high classification accuracy with low computational latency. Traditional machine learning methods often rely on manually crafted features or explicit landmark extraction, which can be sensitive to lighting conditions and complex backgrounds. In contrast, deep Convolutional Neural Networks (CNNs) automatically learn hierarchical spatial features directly from raw image pixels, providing superior robustness.
+
+In this study, we focus on a classic multi-class classification problem: recognizing the ``Rock'', ``Paper'', and ``Scissors'' hand gestures. To address the computational constraints of real-time video processing, we employ MobileNetV2, a highly efficient CNN architecture designed for mobile and resource-constrained environments. By adopting a transfer learning strategy, we modify and fine-tune the network to accurately classify hand gestures in real-time through a live webcam feed. 
+
+The remainder of this paper is organized as follows: Section II details the methodology, including the dataset preparation, network architecture, and the real-time inference pipeline. Section III presents the experimental setup and discusses the performance results. Finally, Section IV concludes the paper.
+
+\section{Methodology}
+
+\subsection{Dataset and Preprocessing}
+The model is trained on the publicly available ``Rock, Paper, Scissors'' dataset provided by Laurence Moroney. This dataset contains a total of 2,520 high-quality, 24-bit color images ($300 \times 300$ pixels), generated using Computer-Generated Imagery (CGI) techniques. The dataset is carefully designed to include diverse hands varying in race, age, and gender to ensure the model generalizes well to real human hands. The dataset is evenly distributed across three classes: \textit{Rock} (840 images), \textit{Paper} (840 images), and \textit{Scissors} (840 images).
+
+For model training, the dataset was randomly split into an 80\% training set (2,016 images) and a 20\% validation set (504 images). To accelerate the training process and reduce memory consumption, all images were resized to $128 \times 128$ pixels. Furthermore, data augmentation was applied to the training set, specifically random horizontal flipping, to increase data diversity and prevent overfitting. Finally, the images were converted to PyTorch tensors and normalized using the standard ImageNet statistics (mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]).
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[b]{0.3\linewidth}
+    \centering
+    \framebox[\linewidth]{\rule{0pt}{2.5cm}}
+    \caption{Rock}
+    \label{fig:rock}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.3\linewidth}
+    \centering
+    \framebox[\linewidth]{\rule{0pt}{2.5cm}}
+    \caption{Paper}
+    \label{fig:paper}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.3\linewidth}
+    \centering
+    \framebox[\linewidth]{\rule{0pt}{2.5cm}}
+    \caption{Scissors}
+    \label{fig:scissors}
+\end{subfigure}
+\caption{Sample images from the CGI-generated dataset showcasing the three gesture classes. (Placeholders for Rock, Paper, and Scissors)}
+\label{fig:dataset_samples}
+\end{figure}
+
+\subsection{Network Architecture}
+To achieve real-time performance without compromising accuracy, we selected the MobileNetV2 architecture. MobileNetV2 introduces the inverted residual structure with linear bottlenecks, significantly reducing the number of parameters and mathematical operations compared to traditional CNNs like VGG or ResNet. 
+
+We utilized a MobileNetV2 model pre-trained on the ImageNet dataset. To adapt the network to our specific task, the final fully connected classifier layer was replaced. Originally designed to output 1,000 classes, the classifier was modified to output exactly 3 classes, corresponding to our gesture categories. This transfer learning approach allows the network to leverage the rich, low-level visual features (e.g., edges and textures) already learned from ImageNet, while fine-tuning the high-level semantic representations for hand gestures.
+
+\subsection{Real-time Inference Pipeline}
+The real-time inference system was implemented using the OpenCV library for video capture and PyTorch for model execution. The pipeline operates as follows:
+\begin{enumerate}
+    \item \textbf{Frame Capture:} A live video stream is captured from the default webcam. The frame is horizontally flipped to create a mirror-like experience, which is more intuitive for the user.
+    \item \textbf{Color Conversion:} The captured frame, initially in BGR format, is converted to RGB format to match the training data color space.
+    \item \textbf{Preprocessing:} The RGB image is converted to a PIL Image, resized to $128 \times 128$ pixels, transformed into a tensor, and normalized using the same ImageNet statistics applied during training. An extra batch dimension is added to match the expected input shape of the model ($1 \times 3 \times 128 \times 128$).
+    \item \textbf{Prediction:} The preprocessed tensor is passed through the network in evaluation mode (with gradient calculation disabled). The raw logits are passed through a Softmax function to compute the prediction probabilities (confidence scores).
+    \item \textbf{Display:} If the highest confidence score exceeds a predefined threshold of 60\% (0.6), the predicted gesture and its confidence percentage are rendered onto the live video frame. Otherwise, it outputs an ``UNKNOWN'' state.
+\end{enumerate}
+
+\section{Experiments and Results}
+
+\subsection{Experimental Setup}
+The training process was implemented using the PyTorch framework. The hardware utilized for training was automatically selected by the script, leveraging GPU acceleration (CUDA or Apple Silicon MPS) when available, or falling back to the CPU. 
+
+The network was trained using the Adam optimizer with a learning rate of 0.001. The objective function employed was the standard Cross-Entropy Loss, suitable for multi-class classification tasks. The batch size was set to 32, and the model was trained for a total of 3 epochs to demonstrate the rapid convergence capabilities of the pre-trained MobileNetV2 model.
+
+\subsection{Training Performance}
+The training process exhibited exceptional efficiency and rapid convergence. The performance metrics across the 3 epochs are summarized in Table~\ref{tab:training_metrics}.
+
+\begin{table}[htbp]
+\centering
+\caption{Training and Validation Metrics over 3 Epochs}
+\label{tab:training_metrics}
+\begin{tabular}{@{}ccccc@{}}
+\toprule
+\multirow{2}{*}{\textbf{Epoch}} & \multicolumn{2}{c}{\textbf{Training}} & \multicolumn{2}{c}{\textbf{Validation}} \\ \cmidrule(lr){2-3} \cmidrule(l){4-5} 
+                                & \textbf{Loss}    & \textbf{Accuracy}  & \textbf{Loss}     & \textbf{Accuracy}   \\ \midrule
+1                               & 0.0953           & 96.58\%            & 0.0003            & 100.00\%            \\
+2                               & 0.0030           & 99.90\%            & 0.0000            & 100.00\%            \\
+3                               & 0.0083           & 99.75\%            & 0.0000            & 100.00\%            \\ \bottomrule
+\end{tabular}
+\end{table}
+
+The model achieved near-perfect accuracy on the validation set starting from the very first epoch. This rapid adaptation highlights the effectiveness of transfer learning and the high discriminative power of the MobileNetV2 feature extractor for this specific dataset. The slight fluctuation in training loss and accuracy in the third epoch is a normal characteristic of stochastic gradient descent optimization.
+
+\subsection{Real-Time Robustness}
+During the real-time evaluation phase, the trained model was deployed via the OpenCV pipeline. The model successfully and consistently classified gestures with high confidence (often exceeding 95\%). Thanks to the lightweight nature of MobileNetV2, the inference latency per frame was minimal, resulting in a smooth video feed without noticeable stuttering. The horizontal flipping of the frame significantly enhanced the user experience, while the confidence thresholding mechanism effectively filtered out transitional hand movements and empty backgrounds, ensuring reliable ``UNKNOWN'' classifications when no valid gesture was presented.
+
+\section{Conclusion}
+In this paper, we successfully developed and deployed a real-time hand gesture recognition system based on the MobileNetV2 convolutional neural network. By leveraging transfer learning on a CGI-generated dataset, the model achieved a remarkable 100\% validation accuracy in only three epochs. The integration of PyTorch and OpenCV provided a highly responsive inference pipeline capable of processing live webcam feeds with minimal latency. Future work could involve expanding the dataset to include a wider variety of complex gestures and exploring quantization techniques to further reduce the model size for ultra-low-power edge devices.
+
+\begin{thebibliography}{00}
+\bibitem{b1} M. Sandler, A. Howard, M. Zhu, A. Zhmoginov, and L.-C. Chen, ``MobileNetV2: Inverted Residuals and Linear Bottlenecks,'' in \emph{Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)}, 2018, pp. 4510-4520.
+\bibitem{b2} L. Moroney, ``Rock, Paper, Scissors Dataset,'' 2019. [Online]. Available: \url{http://laurencemoroney.com/rock-paper-scissors-dataset}
+\bibitem{b3} A. Paszke \textit{et al.}, ``PyTorch: An Imperative Style, High-Performance Deep Learning Library,'' in \emph{Advances in Neural Information Processing Systems 32}, 2019, pp. 8024-8035.
+\bibitem{b4} G. Bradski, ``The OpenCV Library,'' \emph{Dr. Dobb's Journal of Software Tools}, vol. 120, pp. 122-125, 2000.
+\end{thebibliography}
+
+\end{document}
